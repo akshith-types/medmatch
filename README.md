@@ -2,6 +2,8 @@
 
 A conflict-safe reservation and routing network that lets independent hospitals find, reserve and move scarce medical assets — rare blood, antivenom and donor organs — without ever promising the same unit to two hospitals.
 
+**Repository:** https://github.com/akshith-types/medmatch
+
 Built for the **Database Systems Lab (BCSE302P)** at VIT Vellore by **Akshith M (24BAI0017)** and **Sanjaay B (24BCE2181)**.
 
 ![Find and reserve](docs/screenshots/find.png)
@@ -29,7 +31,7 @@ Built for the **Database Systems Lab (BCSE302P)** at VIT Vellore by **Akshith M 
 Requirements: **Docker Desktop** (running) and **Python 3.9+**.
 
 ```bash
-git clone https://github.com/<your-username>/medmatch.git
+git clone https://github.com/akshith-types/medmatch.git
 cd medmatch
 ./start.sh          # Windows: start.bat
 ```
