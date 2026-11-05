@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MedMatch Console</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<div class="shell">
+  <aside class="rail">
+    <div class="brand">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5c3.6 4.6 6.5 8.4 6.5 12a6.5 6.5 0 0 1-13 0c0-3.6 2.9-7.4 6.5-12z"/></svg>
+      <div><strong>MedMatch</strong><span>Rare resource network</span></div>
+    </div>
+
+    <label class="acting" for="actingAs">Acting as
+      <select id="actingAs"></select>
+    </label>
+
+    <nav aria-label="Sections">
+      <button class="nav on" data-view="find">Find and reserve</button>
+      <button class="nav" data-view="transfers">Transfers</button>
+      <button class="nav" data-view="network">Transport network</button>
+      <button class="nav" data-view="lab">Concurrency lab</button>
+      <button class="nav" data-view="plans">Query plans</button>
+      <button class="nav" data-view="audit">Audit trail</button>
+    </nav>
+
+    <div class="health" id="health">Connecting…</div>
+  </aside>
+
+  <main>
+    <header class="pulse" id="pulse"></header>
+
+    <!-- FIND -->
+    <section class="view on" id="view-find">
+      <h1>Find a compatible unit</h1>
+      <form id="searchForm" class="search">
+        <label>Asset type<select id="fType" required></select></label>
+        <label id="bgWrap">Patient blood group
+          <select id="fBlood"><option value="">Any</option></select></label>
+        <label id="hlaWrap" hidden>HLA type<select id="fHla"><option value="">Any</option></select></label>
+        <label>Within (km)<input id="fDist" type="number" min="1" placeholder="No limit"></label>
+        <button class="primary" type="submit">Search network</button>
+      </form>
+      <p class="meta" id="searchMeta"></p>
+      <div class="labels" id="results"></div>
+    </section>
+
+    <!-- TRANSFERS -->
+    <section class="view" id="view-transfers">
+      <h1>Transfers involving your hospital</h1>
+      <div class="filters">
+        <label><input type="checkbox" id="allTransfers"> Show the whole network</label>
+      </div>
+      <table class="grid" id="txTable">
+        <thead><tr><th>#</th><th>Unit</th><th>From</th><th>To</th><th>Route ETA</th><th>Status</th><th></th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </section>
+
+    <!-- NETWORK -->
+    <section class="view" id="view-network">
+      <h1>Transport network</h1>
+      <form class="search" id="routeForm">
+        <label>From<select id="rFrom"></select></label>
+        <label>To<select id="rTo"></select></label>
+        <label class="check"><input type="checkbox" id="rCold" checked> Cold chain only</label>
+        <button class="primary" type="submit">Find fastest route</button>
+      </form>
+      <p class="meta" id="routeMeta"></p>
+      <div class="mapwrap"><svg id="map" role="img" aria-label="Hospital transport network"></svg>
+        <ul class="legend"><li><i class="road"></i>Road</li><li><i class="air"></i>Air corridor</li><li><i class="path"></i>Chosen route</li></ul>
+      </div>
+    </section>
+
+    <!-- LAB -->
+    <section class="view" id="view-lab">
+      <h1>Concurrency lab</h1>
+      <p class="lede">Two hospitals act at the same instant. Each run creates fresh demo units, so it never touches real stock.</p>
+      <div class="experiments">
+        <article>
+          <h2>Race for the last O-negative unit</h2>
+          <p>Katpadi and Ranipet both reserve one unit 0.3 s apart from reading it.</p>
+          <div class="btns">
+            <button data-demo="race" data-flag="false">Run without locking</button>
+            <button class="primary" data-demo="race" data-flag="true">Run with Wait-Die + FOR UPDATE</button>
+          </div>
+        </article>
+        <article>
+          <h2>Opposite-order bundle request</h2>
+          <p>T1 locks blood then antivenom; T2 locks antivenom then blood.</p>
+          <div class="btns">
+            <button data-demo="deadlock" data-flag="false">Run with deadlock detection</button>
+            <button class="primary" data-demo="deadlock" data-flag="true">Run with Wait-Die prevention</button>
+          </div>
+        </article>
+      </div>
+      <div id="labOut" class="labout"></div>
+      <div class="matrix">
+        <h2>Lock compatibility</h2>
+        <table class="grid small"><thead><tr><th>Held ╲ Requested</th><th>Shared</th><th>Exclusive</th></tr></thead>
+          <tbody><tr><th>Shared</th><td class="ok">Granted</td><td class="no">Conflict</td></tr>
+                 <tr><th>Exclusive</th><td class="no">Conflict</td><td class="no">Conflict</td></tr></tbody></table>
+        <p>On conflict, an older transaction waits for a younger holder; a younger one is aborted and restarts with its original timestamp.</p>
+      </div>
+    </section>
+
+    <!-- PLANS -->
+    <section class="view" id="view-plans">
+      <h1>Query plans</h1>
+      <p class="lede">The optimizer's live plan for the core lookup: unexpired, available units of one type and blood group.</p>
+      <form class="search" id="planForm">
+        <label>Asset type<select id="pType"></select></label>
+        <label>Blood group<select id="pBlood"></select></label>
+        <button class="primary" type="submit">Explain analyze</button>
+      </form>
+      <pre id="planOut" class="plan"></pre>
+    </section>
+
+    <!-- AUDIT -->
+    <section class="view" id="view-audit">
+      <h1>Audit trail</h1>
+      <p class="lede">Written by database triggers. The table rejects updates and deletes.</p>
+      <table class="grid" id="auditTable">
+        <thead><tr><th>Time</th><th>Action</th><th>Txn</th><th>Change</th><th>Details</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </section>
+  </main>
+</div>
+
+<dialog id="confirm">
+  <form method="dialog">
+    <h2>Reserve this unit?</h2>
+    <div id="confirmBody"></div>
+    <label>Department<input id="cDept" value="Emergency" required></label>
+    <label>Contact person<input id="cPerson" value="Duty Officer" required></label>
+    <label>Urgency
+      <select id="cUrg"><option>CRITICAL</option><option>HIGH</option><option>MEDIUM</option><option>LOW</option></select></label>
+    <menu><button value="cancel">Keep looking</button><button class="primary" value="ok" id="cOk">Reserve unit</button></menu>
+  </form>
+</dialog>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="/static/app.js"></script>
+</body>
+</html>

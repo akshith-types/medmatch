@@ -1,0 +1,39 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: medmatch-postgres
+    environment:
+      POSTGRES_USER: medmatch
+      POSTGRES_PASSWORD: medmatch
+      POSTGRES_DB: medmatch
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U medmatch"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  neo4j:
+    image: neo4j:5
+    container_name: medmatch-neo4j
+    environment:
+      NEO4J_AUTH: neo4j/medmatch123
+      NEO4J_PLUGINS: '["apoc"]'
+      NEO4J_server_memory_heap_max__size: 512m
+    ports:
+      - "7474:7474"   # Neo4j Browser  -> http://localhost:7474
+      - "7687:7687"   # Bolt (used by the app)
+    volumes:
+      - neo4jdata:/data
+    healthcheck:
+      test: ["CMD-SHELL", "cypher-shell -u neo4j -p medmatch123 'RETURN 1' || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
+volumes:
+  pgdata:
+  neo4jdata:
